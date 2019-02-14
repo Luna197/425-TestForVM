@@ -13,7 +13,8 @@ const(
 // Sned all the data throught json
 type Message struct{
 	msg_type	MessageType_t
-	
+	src		string `json:"src"` // sender
+
 	// Heart beat msg
 	timestamp	string `json:"timestamp,omitempty"`
 

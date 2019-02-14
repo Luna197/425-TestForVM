@@ -16,8 +16,27 @@ func main(){
 	userName, listenPort, totaluser := os.Args[1], os.Args[2], os.Args[3]
 	fmt.Printf("Username : %v, Port : %v ,totaluser : %v\n", userName, listenPort, totaluser)
 
-	// init Process
+	/* init Process
+	  create different channels
+		mcast_app_ch : mcast->app layer
+			deliver messages to the application layer
+		app_mcast_ch : app->mcast layer
+			send messages from app to other hosts
+	*/
+	tcp_mcast_ch := make( chan Message )
+	mcast_app_ch := make( chan string )
+	app_mcast_ch := make( chan string )
 
+	defer close(tcp_mcast_ch)
+	defer close(mcast_app_ch)
+	defer close(app_mcast_ch)
+
+	mcast multicast := &causal_Multicast{}
+	multicast.init( tcp_mcast_ch, mcast_app_ch, app_mcast_ch)
+
+	var client *appLayer
+	client.init( mcast_app_ch, app_mcast_ch)
+	
 
 	// Listen for incoming connections.
     l, err := net.Listen("tcp", "localhost:" + listenPort )
@@ -29,11 +48,11 @@ func main(){
     for {
         conn, err := l.Accept()
         exitOnErr(err, "Error accepting: ", err.Error())
-        go handleRequest(conn)
+        go handleRequest(conn, tcp_mcast_ch)
     }
 }
 
-func handleRequest( conn net.Conn){
+func handleRequest( conn net.Conn, tcp_mcast_ch chan Message ){
 	// Make a buffer to hold incoming data.
 	buf := make([]byte, 1024)
 	// Read the incoming connection into the buffer.
@@ -44,13 +63,14 @@ func handleRequest( conn net.Conn){
 	err = json.Unmarshal(buf[:len],&jsonMsg)
 	exitOnErr(err, "Error Unmarshal data:"err.Error())
 
-	// handle Message based on type
+	// message router
 	fmt.Println(jsonMsg)
 	switch jsonMsg.type{
 		case msg_heartbeat:
 			fmt.Printf("recieved Heartbeat: %v", jsonMsg)
 		case msg_userMsg:
 			fmt.Printf("received User Msg : %v", jsonMsg)
+			tcp_mcast_ch <- jsonMsg 
 		default:
 			fmt.Printf("unknownw msg :%v", jsonMsg)
 	}

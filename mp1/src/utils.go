@@ -21,30 +21,30 @@ func (h Host) String() string{
 
 func exitOnErr(err error, str string){
 	if err != nil{
-		fmt.Println(str)
+		fmt.Printf("%v%v", str, err.Error())
 		os.Exit(1)
 	}
 }
 
 func getLocalIP() string{
 	conn, err := net.Dial("udp", "8.8.8.8:80")
-	exitOnErr(err,"cannot connect to 8.8.8.8:80")
+	exitOnErr(err,"cannot connect to 8.8.8.8:80:")
     
     defer conn.Close()
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 	host, _, err  := net.SplitHostPort(localAddr.String())
-	exitOnErr(err, "Cannot split local IP")
+	exitOnErr(err, "Cannot split local IP:")
 	return host
 }
 
 func getRemoteServers() []Host{
 	
 	jData, err := ioutil.ReadFile("servers.json")
-	exitOnErr(err, err)
+	exitOnErr(err, "cannot read json file:")
 
 	hosts := []Host{}
 	err = json.Unmarshal( jData, &hosts)
-	exitOnErr(err, err)
+	exitOnErr(err, "cannot Unmarshal json file:")
 
 	// get remote ip addrs
 	for _,h:= range hosts{
