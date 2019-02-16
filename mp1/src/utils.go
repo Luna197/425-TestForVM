@@ -16,7 +16,7 @@ type Host struct{
 }
 
 func (h Host) String() string{
-	return fmt.Sprintf("<Host id:%v, dame:%v, ip:%15v, port:%v >", h.Id, h.Domain_name, h.IP_addr, h.Port)
+	return fmt.Sprintf("<Host id:%v, dame:%v, ip:%v, port:%v >", h.Id, h.Domain_name, h.IP_addr, h.Port)
 }
 
 func exitOnErr(err error, str string){
