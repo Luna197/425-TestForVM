@@ -27,4 +27,22 @@ func (fd *failureDetecter) init( st *[10]Status,hIntval Duration, ch chan string
 	fd.status = st
 }
 
-func ()
+func heartBeat(conn net.Conn, msg chan Message, timeout int) {
+     select {
+    	 case mg := <- msg:
+	// finially receive timestap condition
+	  		if mg.timestamp <= timeOut[mg.src]{
+				timeOut[msg.src] = msg.timestamp.Add(time.Duration(timeout) * time.Second))
+			}
+			else{
+				//dead
+				status[msg.src] = 0
+			}
+			break
+        case <- time.After(10 * time.Second):
+	//        Log("conn dead now")
+            conn.Close()
+}
+
+
+

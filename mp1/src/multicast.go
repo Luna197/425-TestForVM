@@ -1,9 +1,5 @@
 package main
 
-import (
-	"fmt"
-)
-
 /*
  Implement all of the functionalities of multicast
 	including Integrity, Validatiy, Agreement properties
@@ -14,7 +10,7 @@ import (
 
  Notice: call init funciton before any operation
 */
-type multicast interface{
+type multicast interface {
 	init()
 	// getReceiveChan() ( <-chan Message )
 	// getDeliverChan() ( chan<- string )
@@ -23,7 +19,7 @@ type multicast interface{
 }
 
 /*
-	implement the multicast with 
+	implement the multicast with
 	Casual ordering
 
 	functionalities to implement
@@ -31,7 +27,7 @@ type multicast interface{
 			1. hold back the out-of-order messages
 			2. filter redundant messages from other host
 			3. broadcast new received messages to other host
-				to achieve agreement properties 
+				to achieve agreement properties
 		// on send
 			1. send data throught tcp to all alive hosts
 			2. must upadta self's lamport timestamps before send
@@ -44,7 +40,7 @@ type multicast interface{
 type causal_Multicast struct {
 	// the two channels
 
-	// for revice 
+	// for revice
 	rcv_ch <-chan Message
 	del_ch chan<- string
 
@@ -52,12 +48,12 @@ type causal_Multicast struct {
 	snd_ch chan<- string
 
 	// internal datastucture
-		// hold backqueue
-		// records of sequence number from different process
+	// hold backqueue
+	// records of sequence number from different process
 
 }
 
-func (cm *causal_Multicast) init( rch chan Message, dch chan string, sch chan string) {
+func (cm *causal_Multicast) init(rch chan Message, dch chan string, sch chan string) {
 	cm.rcv_ch = rch
 	cm.del_ch = dch
 	cm.snd_ch = sch
@@ -72,4 +68,21 @@ func (cm *causal_Multicast) init( rch chan Message, dch chan string, sch chan st
 
 // func (cm *causal_Multicast) getDeliverChan() chan<- {
 // 	return cm.del_ch
+// }
+
+//check status and if alive, create conn and send message
+
+// send heartbead every 10 second, between two frequency, sleep 12 second
+// func sender(conn *net.TCPConn) {
+
+//     for i := 0; i < 10; i++{
+//         words := strconv.Itoa(i)+" Hello I'm MyHeartbeat Client."
+//         msg, err := conn.Write([]byte(words))
+//         exitOnErr(err, "Fatal error")
+//         time.Sleep(1 * time.Second)
+//     }
+//     for i := 0; i < 2 ; i++ {
+//         time.Sleep(12 * time.Second)
+//     }
+
 // }

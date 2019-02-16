@@ -63,18 +63,23 @@ func handleRequest( conn net.Conn, tcp_mcast_ch chan Message ){
 	err = json.Unmarshal(buf[:len],&jsonMsg)
 	exitOnErr(err, "Error Unmarshal data:"err.Error())
 
+	go multicastMsg(jsonMsg, tcp_mcast_ch)
+	go heartBeat(conn, tcp_mcast_ch, 6)
 	// message router
 	fmt.Println(jsonMsg)
-	switch jsonMsg.type{
-		case msg_heartbeat:
-			fmt.Printf("recieved Heartbeat: %v", jsonMsg)
-		case msg_userMsg:
-			fmt.Printf("received User Msg : %v", jsonMsg)
-			tcp_mcast_ch <- jsonMsg 
-		default:
-			fmt.Printf("unknownw msg :%v", jsonMsg)
-	}
-	//fmt.Printf("received message(%v): %v \n", len, string(buf[:19]) )
+	// switch jsonMsg.type{
+	// 	case msg_heartbeat:
+	// 		// update timeout
+	// 		// what if no heartbeat? not the case of timeout
+	// 		go heartBeat(conn, tcp_mcast_ch)
+	// 		fmt.Printf("recieved Heartbeat: %v", jsonMsg)
+	// 	case msg_userMsg:
+	// 		fmt.Printf("received User Msg : %v", jsonMsg)
+	// 		tcp_mcast_ch <- jsonMsg 
+	// 	default:
+	// 		fmt.Printf("unknownw msg :%v", jsonMsg)
+	// }
+	// fmt.Printf("received message(%v): %v \n", len, string(buf[:19]) )
 	
 
 	// Send a response back to person contacting us.
