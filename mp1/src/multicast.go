@@ -72,6 +72,29 @@ func (cm *causal_Multicast) init(rch chan Message, dch chan string, sch chan str
 
 //check status and if alive, create conn and send message
 
+
+func multicastMsg(msg Message) {
+	hosts = getRemoteServers()
+	// hosts => msg.src
+	for _,h:= range hosts{
+		if state[msg.src]:
+			conn, err := net.Dial("udp", h)
+			defer conn.Close()
+			exitOnErr(err, "message connection failed")
+			conn.Write(snd_ch <- msg)
+}
+
+func sendHeartBeat(){
+	hosts = getRemoteServers()
+	for _,h := range hosts{
+		conn, err := net.Dial("udp", h)
+		defer conn.Close()
+		exitOnErr(err, "heartbeat connection failed")
+		// heart beat send what?
+	}
+
+}
+
 // send heartbead every 10 second, between two frequency, sleep 12 second
 // func sender(conn *net.TCPConn) {
 
