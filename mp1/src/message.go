@@ -13,14 +13,54 @@ const(
 // Sned all the data throught json
 type Message struct{
 	msg_type	MessageType_t
-	src		string `json:"src"` // sender
+	senderName		string `json:"senderName"` // sender
+	senderIdx		int `json:"senderIdx"`
 
 	// Heart beat msg
 	timestamp	string `json:"timestamp,omitempty"`
 
+	// Lamport timestamp
+	local_timestamp lTimeStamp_t string `json:"local_timestamp, omitempty"`
+
 	// userMsg
 	text		string `json:"text,omitempty"`
 }
+
+// message heap
+type Message_heap struct{
+	sender_Idx int
+	msg_pts []*Message
+}
+// implement heap interface
+func (msh *Message_heap) Len() int{ return len(msh.msg_pts)}
+func (msh *Message_heap) Less(i,j int) bool{
+	idx := msh.sender_Idx
+	arr := msh.msg_pts 
+	return (*arr[i])[idx] < (*arr[j])[idx]
+}
+func (msh *Message_heap) Swap(i,j int){
+	idx := msh.sender_Idx
+	arr := msh.msg_pts
+	arr[i], arr[j] = arr[j], arr[i]
+}
+func (msh *Message_heap) Push( x interface{}){ *msh = append(*msh, x.(*Message))}
+
+func (msh *Message_heap) Pop() interface{} {
+	old := ts.msg_pts
+	n := len(old)
+	x := old[n-1] // why
+	*ts = old[0 : n-1]
+	return x
+}
+
+func (msh *Message_heap) getFirstTimeStamp() interface{}{
+	return (*msh)msg_pts[0]
+}
+
+func (msh *Message_heap) getFirstMessage() interface{}{
+	return (*msh)msg_pts
+}
+
 
 
 type MsgHandler interface{
