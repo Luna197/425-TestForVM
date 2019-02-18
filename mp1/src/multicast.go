@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"container/heap"
+	"os"
 )
 
 
@@ -19,12 +20,12 @@ type lTimeStamp_t []int64
 
  Notice: call init funciton before any operation
 */
-type multicast interface{
+type multicast interface {
 	init()
 }
 
 /*
-	implement the multicast with 
+	implement the multicast with
 	Casual ordering
 
 	functionalities to implement
@@ -32,7 +33,7 @@ type multicast interface{
 			1. hold back the out-of-order messages
 			2. filter redundant messages from other host
 			3. broadcast new received messages to other host
-				to achieve agreement properties 
+				to achieve agreement properties
 		// on send
 			1. send data throught tcp to all alive hosts
 			2. must upadta self's lamport timestamps before send
@@ -44,7 +45,7 @@ type multicast interface{
 type causal_Multicast struct {
 	// the two channels
 
-	// for revice 
+	// for revice
 	rcv_ch <-chan Message
 	del_ch chan<- string
 
@@ -104,6 +105,7 @@ func (cm *causal_Multicast ) recvMsg_handler(){
 		// new message, broadcast to everyone
 		if msg_future || msg_next {
 			// broadcast to everyone
+			multicastMsg( msg, true)
 		}
 
 		// put message in queue and deliver
@@ -153,10 +155,33 @@ func (cm *causal_Multicast ) sendMsg_handler(){
 	text <- cm.snd_ch.(string)
 	var msg := Message{}
 	msg.msg_type = msg_userMsg
-	msg.senderName =  "to be added" // some name
-	msg.senderIdx = 0// some index
 	msg.local_timestamp = cm.local_timestamp
 	msg.text = text
+	multicastMsg( msg, true )
+}
+
+/*
+	Multicast a Message to another servers
+	Only append senderName, senderIdx to the message
+	the type must be inserted before calling this fuction
+*/
+func multicastMsg(msg Message, sendOnlyAlive bool) {
+	if msg.msg_type = msg_none{
+		fmt.Println("multicast message without given a msg_type")
+		os.Exit(1)
+	}
+	msg.senderName =  "to be added" // some name
+	msg.senderIdx = 0// some index
+
+	hosts = getRemoteServers()
+	// hosts => msg.src
+	for _,h:= range hosts{
+		if !sendOnlyAlive | (sendOnlyAlive && hosts_status[msg.src]==status_alive){
+			conn, err := net.Dial("udp", h)
+			defer conn.Close()
+			exitOnErr(err, "message connection failed")
+			conn.Write(snd_ch <- msg)
+		}			
 }
 
 

@@ -6,8 +6,9 @@ import (
 
 type MessageType_t int
 const(
-	msg_heartbeat	MessageType_t = 0
-	msg_userMsg		MessageType_t = 1 
+	msg_none		MessageType_t = 0
+	msg_heartbeat	MessageType_t = 1
+	msg_userMsg		MessageType_t = 2 
 )
 
 // Sned all the data throught json
@@ -17,7 +18,7 @@ type Message struct{
 	senderIdx		int `json:"senderIdx"`
 
 	// Heart beat msg
-	timestamp	string `json:"timestamp,omitempty"`
+	timestamp	time.Time `json:"timestamp,omitempty"`
 
 	// Lamport timestamp
 	local_timestamp lTimeStamp_t string `json:"local_timestamp, omitempty"`

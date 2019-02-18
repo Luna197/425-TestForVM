@@ -6,6 +6,8 @@ import (
 	"net"
 )
 
+var hosts_status [10]Status
+
 func main(){
 	if len(os.Args)< 4 {
 		fmt.Println("invalid arguments. please use the following format: ")
@@ -26,10 +28,15 @@ func main(){
 	tcp_mcast_ch := make( chan Message )
 	mcast_app_ch := make( chan string )
 	app_mcast_ch := make( chan string )
+	tcp_fdetect_ch := make( chan Message)
 
 	defer close(tcp_mcast_ch)
 	defer close(mcast_app_ch)
 	defer close(app_mcast_ch)
+	defer close(tcp_fdetect_ch)
+
+	var fdet failureDetecter{}
+	fdet.init(&hosts_status,tcp_fdetect_ch)
 
 	mcast multicast := &causal_Multicast{}
 	multicast.init( tcp_mcast_ch, mcast_app_ch, app_mcast_ch)
@@ -63,18 +70,23 @@ func handleRequest( conn net.Conn, tcp_mcast_ch chan Message ){
 	err = json.Unmarshal(buf[:len],&jsonMsg)
 	exitOnErr(err, "Error Unmarshal data:"err.Error())
 
+	// go multicastMsg(jsonMsg, tcp_mcast_ch)
+	// go heartBeat(conn, tcp_mcast_ch, 6)
 	// message router
 	fmt.Println(jsonMsg)
+
 	switch jsonMsg.type{
 		case msg_heartbeat:
+			tcp_fdetect_ch <-jsonMsg
 			fmt.Printf("recieved Heartbeat: %v", jsonMsg)
 		case msg_userMsg:
 			fmt.Printf("received User Msg : %v", jsonMsg)
 			tcp_mcast_ch <- jsonMsg 
+			
 		default:
 			fmt.Printf("unknownw msg :%v", jsonMsg)
 	}
-	//fmt.Printf("received message(%v): %v \n", len, string(buf[:19]) )
+	fmt.Printf("received message(%v): %v \n", len, string(buf[:19]) )
 	
 
 	// Send a response back to person contacting us.
