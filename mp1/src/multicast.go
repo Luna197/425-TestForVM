@@ -85,8 +85,7 @@ func (cm *causal_Multicast) deliverMsg( msg *Message){
 
 func (cm *causal_Multicast ) recvMsg_handler(){
 	// get message from lower layer
-	for msg:= cm.rcv_ch {
-
+	for msg := range cm.rcv_ch{
 		n = len(cm.local_timestamp)
 		cts, mts := cm.local_timestamp, msg.local_timestamp
 
@@ -94,6 +93,7 @@ func (cm *causal_Multicast ) recvMsg_handler(){
 		msg_duplicate := true
 		for i:=0; i<n; i++{
 			if mts[i] > cts[i]{
+
 				msg_duplicate = false
 				break 
 			} 
@@ -153,7 +153,7 @@ func (cm *causal_Multicast ) sendMsg_handler(){
 	// get hosts to send message
 	// only send to soemone who is alive
 	text <- cm.snd_ch.(string)
-	var msg := Message{}
+	var msg Message
 	msg.msg_type = msg_userMsg
 	msg.local_timestamp = cm.local_timestamp
 	msg.text = text
