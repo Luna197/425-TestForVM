@@ -1,15 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"container/heap"
-	"os"
-)
-
-
-type lTimeStamp_t []int64
-
-
 /*
  Implement all of the functionalities of multicast
 	including Integrity, Validatiy, Agreement properties
@@ -22,6 +12,10 @@ type lTimeStamp_t []int64
 */
 type multicast interface {
 	init()
+	// getReceiveChan() ( <-chan Message )
+	// getDeliverChan() ( chan<- string )
+
+	// getSendChan() ( chan<- string )
 }
 
 /*
@@ -42,6 +36,7 @@ type multicast interface {
 		// on deliver
 			1. append other user's Id in the string(easier to implement)
 */
+
 type causal_Multicast struct {
 	// the two channels
 
@@ -53,135 +48,65 @@ type causal_Multicast struct {
 	snd_ch chan<- string
 
 	// internal datastucture
-	local_timestamp lamportTimeStamp
-	holdback_queues []lTimeStampInfo_heap
+	// hold backqueue
+	// records of sequence number from different process
+
 }
 
-
-func (cm *causal_Multicast) init( numHosts int, rch chan Message, dch chan string, sch chan string) {
-	cm.ltimestamp = make( lamportTimeStamp, numHosts)
+func (cm *causal_Multicast) init(rch chan Message, dch chan string, sch chan string) {
 	cm.rcv_ch = rch
 	cm.del_ch = dch
 	cm.snd_ch = sch
 
 	// start a new go routine to handle send messages
-	go recvMsg_handler()
-	go sendMsg_handler()
+
 }
 
-/*
-	deliver message to user channel and update the local-timestamp
-*/
-func (cm *causal_Multicast) deliverMsg( msg *Message){
-	deliver_str := msg.senderName + ": " + msg.txt
-	del_ch <- deliver_str
-	// update timestamp
-	for i:= len(cm.local_timestamp); i>=0; i--{
-		if cm.local_timestamp[i] < msg.local_timestamp[i]{
-			cm.local_timestamp[i] = msg.local_timestamp[i] 
-		}
-	}
-}
+// func (cm *causal_Multicast) getReceiveChan() <-cha n{
+// 	return cm.rcv_ch
+// }
 
-func (cm *causal_Multicast ) recvMsg_handler(){
-	// get message from lower layer
-	for msg:= cm.rcv_ch {
+// func (cm *causal_Multicast) getDeliverChan() chan<- {
+// 	return cm.del_ch
+// }
 
-		n = len(cm.local_timestamp)
-		cts, mts := cm.local_timestamp, msg.local_timestamp
+//check status and if alive, create conn and send message
 
-		//check duplicate message
-		msg_duplicate := true
-		for i:=0; i<n; i++{
-			if mts[i] > cts[i]{
-				msg_duplicate = false
-				break 
-			} 
-		}
-		if msg_duplicate{
-			continue
-		}
 
-		// new message, broadcast to everyone
-		if msg_future || msg_next {
-			// broadcast to everyone
-			multicastMsg( msg, true)
-		}
-
-		// put message in queue and deliver
-		heap.Push(cm.holdback_queues[msg.senderIdx], cm)
-		// deliver all possible messages and update timestamp
-		for delivered_count:=1 ; delivered_count>0;{
-			delivered_count = 0
-			for _,que := range cm.holdback_queues{
-
-				// message timestamp & local timestamp
-				mts := que.getFirstTimeStamp().(lTimeStamp_t)
-				lts := cm.local_timestamp
-				
-				var msg_next, msg_future bool
-				for i, next_cnt:=0,0 ; i<n; i++{
-					if lts[i] >= mts[i]{
-						continue
-					}else if lts[i]+1 == mts[i]{
-						msg_next = true
-						next_cnt++
-						if next_cnt>=2{
-							msg_future,msg_next = true, false
-							break
-						}
-					}else{
-						msg_future,msg_next = true, false
-						break
-					}
-				}
-	
-				if msg_future {
-					continue
-				}else if msg_next{
-					//deliver msg
-					msg_to_be_delivered := heap.Pop(que).(Message)
-					cm.deliverMsg(msg_to_be_delivered)
-					delivered_count++
-				}
-			}
-		}  
-	}
-}
-
-func (cm *causal_Multicast ) sendMsg_handler(){
-	// get hosts to send message
-	// only send to soemone who is alive
-	text <- cm.snd_ch.(string)
-	var msg := Message{}
-	msg.msg_type = msg_userMsg
-	msg.local_timestamp = cm.local_timestamp
-	msg.text = text
-	multicastMsg( msg, true )
-}
-
-/*
-	Multicast a Message to another servers
-	Only append senderName, senderIdx to the message
-	the type must be inserted before calling this fuction
-*/
-func multicastMsg(msg Message, sendOnlyAlive bool) {
-	if msg.msg_type = msg_none{
-		fmt.Println("multicast message without given a msg_type")
-		os.Exit(1)
-	}
-	msg.senderName =  "to be added" // some name
-	msg.senderIdx = 0// some index
-
+func multicastMsg(msg Message) {
 	hosts = getRemoteServers()
 	// hosts => msg.src
-	for _,h:= range hosts{
-		if !sendOnlyAlive | (sendOnlyAlive && hosts_status[msg.src]==status_alive){
-			conn, err := net.Dial("udp", h)
+	for h := range hosts{
+		if state[msg.src]:
+			conn, err := net.Dial("udp", h.ip+":"+h.Port)
 			defer conn.Close()
 			exitOnErr(err, "message connection failed")
 			conn.Write(snd_ch <- msg)
-		}			
+}
 }
 
+func sendHeartBeat(){
+	hosts = getRemoteServers()
+	for _,h := range hosts{
+		conn, err := net.Dial("udp", h.ip+":"+h.Port)
+		defer conn.Close()
+		exitOnErr(err, "heartbeat connection failed")
+		// heart beat send what?
+	}
 
+}
+
+// send heartbead every 10 second, between two frequency, sleep 12 second
+// func sender(conn *net.TCPConn) {
+
+//     for i := 0; i < 10; i++{
+//         words := strconv.Itoa(i)+" Hello I'm MyHeartbeat Client."
+//         msg, err := conn.Write([]byte(words))
+//         exitOnErr(err, "Fatal error")
+//         time.Sleep(1 * time.Second)
+//     }
+//     for i := 0; i < 2 ; i++ {
+//         time.Sleep(12 * time.Second)
+//     }
+
+// }
