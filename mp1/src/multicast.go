@@ -180,7 +180,7 @@ func multicastMsg(msg Message, sendOnlyAlive bool) {
 			conn, err := net.Dial("udp", h)
 			defer conn.Close()
 			exitOnErr(err, "message connection failed")
-			conn.Write(snd_ch <- msg)
+			conn.Write(msg)
 		}			
 }
 
