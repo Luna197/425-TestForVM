@@ -44,7 +44,8 @@ func main(){
 	var client *appLayer
 	client.init( mcast_app_ch, app_mcast_ch)
 	
-
+	
+	go sendServers()
 	// Listen for incoming connections.
     l, err := net.Listen("tcp", "localhost:" + listenPort )
     exitOnErr(err, "Error listening:", err.Error())
@@ -55,16 +56,82 @@ func main(){
     for {
         conn, err := l.Accept()
         exitOnErr(err, "Error accepting: ", err.Error())
-        go handleRequest(conn, tcp_mcast_ch)
+		go handleRequest(conn, tcp_mcast_ch)
+		
     }
 }
 
+func sendServers(){
+	ipself = getLocalIP()
+	count = 0
+	for h := range Host{
+		if !Status[index]{
+			continue
+		}
+		if h.IP_addr== ipself{
+			continue
+		}
+		dialAddr := h.IP_addr + ":" + h.Port
+		dialCon, err := net.Dial("tcp", dialAddr)
+		if err == nil {
+		State[index] = True
+		count = count + 1
+		h.conn = dialCon
+		go handle(dialCon, h)
+		}
+		if count == n - 1 {
+			break
+		}
+
+	}
+}
+
+func Handler(conn net.Conn, hosts Host) {
+	buf := make([]byte, 1024)
+	for {	
+	n, err := conn.Read(buf)
+	if err != nil {
+	left_User = Hosts[findHostIndexByConn(conn)].UserName 
+	fmt.Println(jsonMsg.userName + " has left")
+	h.conn =  nil
+	conn.Close()
+	breakx
+	}
+	var jsonMsg Message
+	err = json.Unmarshal(buf[:len],&jsonMsg)
+	exitOnErr(err, "Error Unmarshal data:" + err.Error())
+
+	for h := range hosts{
+		if h.conn != nil{
+			// writ to conn and make it to json type
+			data := json.Marshal(jsonMsg)
+			val.Write([]byte(data))
+
+		}
+
+	}
+
+	// // get ip from connection 
+	// ip_now := strings.Split(conn.RemoteAddr().String(), ":")[0]
+
+	// var jsonMsg Message
+	// err = json.Unmarshal(buf[:len],&jsonMsg)
+	// exitOnErr(err, "Error Unmarshal data:" + err.Error())
+	// }
+
+	}
+
+// for - accept,
 func handleRequest( conn net.Conn, tcp_mcast_ch chan Message ){
 	// Make a buffer to hold incoming data.
 	buf := make([]byte, 1024)
 	// Read the incoming connection into the buffer.
 	len, err := conn.Read(buf)
 	exitOnErr(err, "Error reading:" + err.Error())
+	//find dead and delet from muliticast 
+//if conn failed in here, just regard this user left
+// conn faild - conn, if, user - failed - left
+
 
 	var jsonMsg Message
 	err = json.Unmarshal(buf[:len],&jsonMsg)

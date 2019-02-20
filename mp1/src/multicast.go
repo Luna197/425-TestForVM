@@ -175,9 +175,11 @@ func multicastMsg(msg Message, sendOnlyAlive bool) {
 
 	hosts = getRemoteServers()
 	// hosts => msg.src
-	for _,h:= range hosts{
-		if !sendOnlyAlive | (sendOnlyAlive && hosts_status[msg.src]==status_alive){
-			conn, err := net.Dial("udp", h)
+	for index,h:= range hosts{
+		// self is alive and the hosts_status is alive
+		// index => hosts_status[index] => servers[id]
+		if !sendOnlyAlive | (sendOnlyAlive && hosts_status[index]==status_alive){
+			conn, err := net.Dial("tcp", h.IP + ":" + h.Port)
 			defer conn.Close()
 			exitOnErr(err, "message connection failed")
 			conn.Write(msg)

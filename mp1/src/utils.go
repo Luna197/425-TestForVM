@@ -13,6 +13,7 @@ type Host struct{
 	Domain_name	string	`json:"dname,omitempty"`
 	IP_addr		string	`json:"ip,omitempty"`
 	Port		string	`json:"port,omitempty"`
+	//conn      net.Conn 
 }
 
 func (h Host) String() string{
@@ -36,6 +37,9 @@ func getLocalIP() string{
 	exitOnErr(err, "Cannot split local IP:")
 	return host
 }
+
+
+
 
 func getRemoteServers() []Host{
 	
