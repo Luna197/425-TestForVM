@@ -36,7 +36,7 @@ func main() {
 	exitOnErr(err,"cannot connect to 8.8.8.8:80:")
 	defer conn.Close()
 	fmt.Printf("lookup conn: %v -> its host :%v\n", conn, idx)
->>>>>>> d7006056134c6d97536a6a1513939b3685343f06
+// >>>>>>> d7006056134c6d97536a6a1513939b3685343f06
 
 	for h := range hs{
 		fmt.Printf()

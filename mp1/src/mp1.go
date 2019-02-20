@@ -1,24 +1,38 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"os"
 	"net"
+	"os"
+	"strconv"
 )
 
-var hosts_status [10]Status
+var hosts_status [10]bool
 
-
-func main(){
-	if len(os.Args)< 4 {
+func main() {
+	if len(os.Args) < 4 {
 		fmt.Println("invalid arguments. please use the following format: ")
 		fmt.Println("\"./mp1 name port n\"")
 		os.Exit(1)
 	}
-	//fmt.Printf("arguments : %v\n", os.Args)
+	// //fmt.Printf("arguments : %v\n", os.Args)
 	userName, listenPort, totaluser := os.Args[1], os.Args[2], os.Args[3]
 	fmt.Printf("Username : %v, Port : %v ,totaluser : %v\n", userName, listenPort, totaluser)
 
+	i_totaluser, err := strconv.Atoi(totaluser)
+	if err != nil {
+		exitOnErr(err, "string to int conver fail")
+	}
+
+	initHostInformation(mode_local)
+
+	thisID := getHostIndexByPort(listenPort)
+	Hosts[thisID].UserName = userName
+
+	hosts_status[thisID] = true
+
+	go sendServers(listenPort, i_totaluser)
 	/* init Process
 	  create different channels
 		mcast_app_ch : mcast->app layer
@@ -26,138 +40,170 @@ func main(){
 		app_mcast_ch : app->mcast layer
 			send messages from app to other hosts
 	*/
-	tcp_mcast_ch := make( chan Message )
-	mcast_app_ch := make( chan string )
-	app_mcast_ch := make( chan string )
-	//tcp_fdetect_ch := make( chan Message)
+	// tcp_mcast_ch := make( chan Message )
+	// mcast_app_ch := make( chan string )
+	// app_mcast_ch := make( chan string )
+	// //tcp_fdetect_ch := make( chan Message)
 
-	defer close(tcp_mcast_ch)
-	defer close(mcast_app_ch)
-	defer close(app_mcast_ch)
+	// defer close(tcp_mcast_ch)
+	// defer close(mcast_app_ch)
+	// defer close(app_mcast_ch)
 	//defer close(tcp_fdetect_ch)
 
-// 	var fdet failureDetecter
-// 	fdet.init(&hosts_status,tcp_fdetect_ch)
-// >>>>>>> master
+	// 	var fdet failureDetecter
+	// 	fdet.init(&hosts_status,tcp_fdetect_ch)
+	// >>>>>>> master
 
-	mcast multicast := &causal_Multicast{}
-	multicast.init( tcp_mcast_ch, mcast_app_ch, app_mcast_ch)
+	// mcast multicast := &causal_Multicast
+	// multicast.init( tcp_mcast_ch, mcast_app_ch, app_mcast_ch)
 
-	var client *appLayer
-	client.init( mcast_app_ch, app_mcast_ch)
-	
-	//initHostInformation(mode_local)
-	go sendServers(listenPort, totaluser)
-	// Listen for incoming connections.
-    l, err := net.Listen("tcp", "localhost:" + listenPort )
-    exitOnErr(err, "Error listening:", err.Error())
+	// var client *appLayer
+	// client.init( mcast_app_ch, app_mcast_ch)
 
-    // Close the listener when the application closes.
-    defer l.Close()
-    fmt.Println("Listening on localhost : " + listenPort )
-    for {
-        conn, err := l.Accept()
-        exitOnErr(err, "Error accepting: ", err.Error())
-		go Handler(conn, tcp_mcast_ch)
-		
-    }
+	// for h := range Hosts {
+
+	// 	fmt.Println(Hosts[h].Port)
+	// }
+
+	//Listen for incoming connections.
+	//"localhost:"
+	listenhost := ":" + listenPort
+
+	l, err := net.Listen("tcp", listenhost)
+	fmt.Println("listen port now is ", listenPort)
+	if err != nil {
+		fmt.Println("Listen failed")
+		return
+	}
+
+	//exitOnErr(err, "Error listening:" + err.Error())
+
+	// Close the listener when the application closes.
+	//defer l.Close()
+
+	fmt.Println("Listening on localhost : " + listenPort)
+
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("accept failed")
+			continue
+		}
+		//go Handler(conn, Hosts)
+
+		hostID := getHostIndexByPort(listenPort)
+		// if hostID == -1 {
+		// 	fmt.Println("Cnnot find host index")
+		// 	os.Exit(-1)
+		// }
+		//	hosts_status[hostID] = true
+		Hosts[hostID].Conn = conn
+	}
 }
 
-// 
-func sendServers(port string, n int){
-	ipself = getLocalIP()
-	count = 0
+func sendServers(port string, n int) {
+	count := 1
 	for {
-
-		for idx, h := range Hosts{
-			if Status[idx] == status_dead{
+		//88fmt.Println(count)
+		// loop all ips  in hosts
+		for idx := range Hosts {
+			//	fmt.Println("----------------------------",idx, port, Hosts[idx].Port)
+			if Hosts[idx].Port == port {
 				continue
 			}
-			if h.IP_addr == ipself{
-				continue
+			if hosts_status[idx] == true {
+				if Hosts[idx].Conn == nil {
+					count = count - 1
+					hosts_status[idx] = false
+				}
 			}
-			
-			dialAddr := h.IP_addr + ":" + port
+			dialAddr := "127.0.0.1:" + Hosts[idx].Port
 			dialCon, err := net.Dial("tcp", dialAddr)
 			if err == nil {
+				fmt.Println("successful connection:-------------------", Hosts[idx].Port)
 				count = count + 1
-				Status[idx] = status_alive
-				h.conn = dialCon
-				go handle(dialCon, Hosts)
+				hosts_status[idx] = true
+				Hosts[idx].Conn = dialCon
+				go readHandler(dialCon, port)
+				go writeHandler(port)
 			}
 		}
-		if count == n-1{
+		if count == n {
 			break
 		}
 	}
-
 	fmt.Println("READY")
 }
 
-func Handler(conn net.Conn, Hosts Host) {
-	buf := make([]byte, 1024)
-	for {	
+func readHandler(conn net.Conn, listenPort string) {
+
+	for {
+		var buf = make([]byte, 1024)
+		//fmt.Println("handle connection ============= ")
 		len, err := conn.Read(buf)
+
 		if err != nil {
-			left_User = Hosts[findHostIndexByConn(conn)].UserName 
+			hostId := getHostIndexByPort(listenPort)
+
+			// should get user name from the connection and update
+			left_User := Hosts[hostId].UserName
 			fmt.Println(left_User + " has left")
-			Hosts[findHostIndexByConn(conn)].Conn =  nil
-			conn.Close()
+			Hosts[hostId].Conn = nil
+			hosts_status[hostId] = false
+		//	conn.Close()
 			break
 		}
-		var jsonMsg Message
-		err = json.Unmarshal(buf[:len],&jsonMsg)
-		exitOnErr(err, "Error Unmarshal data:" + err.Error())
+		fmt.Printf("Message got from %s is %s\n", listenPort, string(buf[:len]))
+	}
+}
+func writeHandler(listenPort string) {
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		data := scanner.Text()
+		for idx := range Hosts {
 
-		fmt.Println(jsonMsg.senderName + ":" + jsonMsg.text)
-
-		for h := range Hosts{
-			if h.conn != nil{
-				// writ to conn and make it to json type
-				data := json.Marshal(jsonMsg)
-				val.Write([]byte(data))
+			if Hosts[idx].Conn != nil {
+				Hosts[idx].Conn.Write([]byte(data))
 			}
 		}
+		fmt.Printf("Message got from %s is %s\n", listenPort, scanner.Text())
 	}
 }
 
-// // for - accept,
-// func handleRequest( conn net.Conn, tcp_mcast_ch chan Message ){
-// 	// Make a buffer to hold incoming data.
-// 	buf := make([]byte, 1024)
-// 	// Read the incoming connection into the buffer.
-// 	len, err := conn.Read(buf)
-// 	exitOnErr(err, "Error reading:" + err.Error())
-// 	//find dead and delet from muliticast 
-// //if conn failed in here, just regard this user left
-// // conn faild - conn, if, user - failed - left
+// // // for - accept,
+// // func handleRequest( conn net.Conn, tcp_mcast_ch chan Message ){
+// // 	// Make a buffer to hold incoming data.
+// // 	buf := make([]byte, 1024)
+// // 	// Read the incoming connection into the buffer.
+// // 	len, err := conn.Read(buf)
+// // 	exitOnErr(err, "Error reading:" + err.Error())
+// // 	//find dead and delet from muliticast
+// // //if conn failed in here, just regard this user left
+// // // conn faild - conn, if, user - failed - left
 
+// // 	var jsonMsg Message
+// // 	err = json.Unmarshal(buf[:len],&jsonMsg)
+// // 	exitOnErr(err, "Error Unmarshal data:" + err.Error())
 
-// 	var jsonMsg Message
-// 	err = json.Unmarshal(buf[:len],&jsonMsg)
-// 	exitOnErr(err, "Error Unmarshal data:" + err.Error())
+// // 	// go multicastMsg(jsonMsg, tcp_mcast_ch)
+// // 	// go heartBeat(conn, tcp_mcast_ch, 6)
+// // 	// message router
+// // 	fmt.Println(jsonMsg)
 
-// 	// go multicastMsg(jsonMsg, tcp_mcast_ch)
-// 	// go heartBeat(conn, tcp_mcast_ch, 6)
-// 	// message router
-// 	fmt.Println(jsonMsg)
+// // 	switch jsonMsg.msg_type{
+// // 		case msg_heartbeat:
+// // 			// tcp_fdetect_ch <-jsonMsg
+// // 			// fmt.Printf("recieved Heartbeat: %v", jsonMsg)
+// // 		case msg_userMsg:
+// // 			fmt.Printf("received User Msg : %v", jsonMsg)
+// // 			tcp_mcast_ch <- jsonMsg
 
-// 	switch jsonMsg.msg_type{
-// 		case msg_heartbeat:
-// 			// tcp_fdetect_ch <-jsonMsg
-// 			// fmt.Printf("recieved Heartbeat: %v", jsonMsg)
-// 		case msg_userMsg:
-// 			fmt.Printf("received User Msg : %v", jsonMsg)
-// 			tcp_mcast_ch <- jsonMsg 
-			
-// 		default:
-// 			fmt.Printf("unknownw msg :%v", jsonMsg)
-// 	}
-// 	fmt.Printf("received message(%v): %v \n", len, string(buf[:19]) )
-	
+// // 		default:
+// // 			fmt.Printf("unknownw msg :%v", jsonMsg)
+// // 	}
+// // 	fmt.Printf("received message(%v): %v \n", len, string(buf[:19]) )
 
-// 	// Send a response back to person contacting us.
-// 	conn.Write([]byte("Message received."))
-// 	// Close the connection when you're done with it.
-// 	conn.Close()
-// }
+// // 	// Send a response back to person contacting us.
+// // 	conn.Write([]byte("Message received."))
+// // 	// Close the connection when you're done with it.
+// // 	conn.Close()

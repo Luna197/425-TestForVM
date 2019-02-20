@@ -166,10 +166,10 @@ func (cm *causal_Multicast ) sendMsg_handler(){
 	the type must be inserted before calling this fuction
 */
 func multicastMsg(msg Message, sendOnlyAlive bool) {
-	if msg.msg_type = msg_none{
-		fmt.Println("multicast message without given a msg_type")
-		os.Exit(1)
-	}
+	// if msg.msg_type = msg_none{
+	// 	fmt.Println("multicast message without given a msg_type")
+	// 	os.Exit(1)
+	// }
 	msg.senderName =  "to be added" // some name
 	msg.senderIdx = 0// some index
 
@@ -185,5 +185,4 @@ func multicastMsg(msg Message, sendOnlyAlive bool) {
 			conn.Write(msg)
 		}			
 }
-
-
+}
