@@ -28,15 +28,16 @@ func main(){
 	tcp_mcast_ch := make( chan Message )
 	mcast_app_ch := make( chan string )
 	app_mcast_ch := make( chan string )
-	tcp_fdetect_ch := make( chan Message)
+	//tcp_fdetect_ch := make( chan Message)
 
 	defer close(tcp_mcast_ch)
 	defer close(mcast_app_ch)
 	defer close(app_mcast_ch)
-	defer close(tcp_fdetect_ch)
+	//defer close(tcp_fdetect_ch)
 
-	var fdet failureDetecter
-	fdet.init(&hosts_status,tcp_fdetect_ch)
+// 	var fdet failureDetecter
+// 	fdet.init(&hosts_status,tcp_fdetect_ch)
+// >>>>>>> master
 
 	mcast multicast := &causal_Multicast{}
 	multicast.init( tcp_mcast_ch, mcast_app_ch, app_mcast_ch)
@@ -144,8 +145,8 @@ func handleRequest( conn net.Conn, tcp_mcast_ch chan Message ){
 
 	switch jsonMsg.msg_type{
 		case msg_heartbeat:
-			tcp_fdetect_ch <-jsonMsg
-			fmt.Printf("recieved Heartbeat: %v", jsonMsg)
+			// tcp_fdetect_ch <-jsonMsg
+			// fmt.Printf("recieved Heartbeat: %v", jsonMsg)
 		case msg_userMsg:
 			fmt.Printf("received User Msg : %v", jsonMsg)
 			tcp_mcast_ch <- jsonMsg 
