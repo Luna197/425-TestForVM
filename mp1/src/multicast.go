@@ -85,7 +85,7 @@ func (cm *causal_Multicast) deliverMsg( msg *Message){
 
 func (cm *causal_Multicast ) recvMsg_handler(){
 	// get message from lower layer
-	for msg:= cm.rcv_ch {
+	for msg:= range cm.rcv_ch {
 
 		n = len(cm.local_timestamp)
 		cts, mts := cm.local_timestamp, msg.local_timestamp
