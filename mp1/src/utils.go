@@ -20,7 +20,7 @@ type Host struct{
 	Id			string	`json:"id,omitempty"`
 	Domain_name	string	`json:"dname,omitempty"`
 	IP_addr		string	`json:"ip,omitempty"`
-// 	Port		string	`json:"port,omitempty"`
+ 	Port		string	`json:"port,omitempty"`
 // <<<<<<< HEAD
 // 	//conn      net.Conn 
 // =======
@@ -125,7 +125,6 @@ func initHostInformation(mode RunMode_t){
 	} 
 	UTILS_currRunMode = mode
 	jData, err := ioutil.ReadFile(hostStr)
->>>>>>> d7006056134c6d97536a6a1513939b3685343f06
 	exitOnErr(err, "cannot read json file:")
 
 	hosts := []Host{}
