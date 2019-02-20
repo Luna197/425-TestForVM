@@ -35,8 +35,13 @@ func main(){
 	defer close(app_mcast_ch)
 	//defer close(tcp_fdetect_ch)
 
+<<<<<<< HEAD
 	// var fdet failureDetecter{}
 	// fdet.init(&hosts_status,tcp_fdetect_ch)
+=======
+	var fdet failureDetecter
+	fdet.init(&hosts_status,tcp_fdetect_ch)
+>>>>>>> master
 
 	mcast multicast := &causal_Multicast{}
 	multicast.init( tcp_mcast_ch, mcast_app_ch, app_mcast_ch)
@@ -64,18 +69,18 @@ func handleRequest( conn net.Conn, tcp_mcast_ch chan Message ){
 	buf := make([]byte, 1024)
 	// Read the incoming connection into the buffer.
 	len, err := conn.Read(buf)
-	exitOnErr(err, "Error reading:"err.Error())
+	exitOnErr(err, "Error reading:" + err.Error())
 
 	var jsonMsg Message
 	err = json.Unmarshal(buf[:len],&jsonMsg)
-	exitOnErr(err, "Error Unmarshal data:"err.Error())
+	exitOnErr(err, "Error Unmarshal data:" + err.Error())
 
 	// go multicastMsg(jsonMsg, tcp_mcast_ch)
 	// go heartBeat(conn, tcp_mcast_ch, 6)
 	// message router
 	fmt.Println(jsonMsg)
 
-	switch jsonMsg.type{
+	switch jsonMsg.msg_type{
 		case msg_heartbeat:
 			// tcp_fdetect_ch <-jsonMsg
 			// fmt.Printf("recieved Heartbeat: %v", jsonMsg)

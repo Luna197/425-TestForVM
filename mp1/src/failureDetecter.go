@@ -2,8 +2,8 @@ package main
 
 import (
 	"time"
-	"time.Time"
-	"time.Duration"
+	// "time.Time"
+	// "time.Duration"
 	"sync"
 )
 
@@ -40,7 +40,7 @@ func (fd *failureDetecter) init( st *[10]Status,hIntval Duration, ch chan string
 }
 
 func (fd *failureDetecter) startHeartBeating(){
-	var msg Message{}
+	var msg Message
 	msg.msg_type = msg_heartbeat
 	for {
 		msg.timestamp = time.Now()
@@ -79,9 +79,9 @@ func (fd *failureDetecter) checkTimeOut(){
 
 // receive message and check hearBest fail or not, update timeout
 func (fd *failureDetecter) recvMsg_handler() {
-    for msg := fd.recv_ch{
+    for msg := range fd.recv_ch{
 		if mg.timestamp <= timeOut[mg.src]{
-			timeOut[msg.src] = msg.timestamp.Add(time.Duration(timeout) * time.Second))
+			timeOut[msg.src] = msg.timestamp.Add(time.Duration(timeout) * time.Second)
 		}
 	}  		
 }

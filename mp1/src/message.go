@@ -21,7 +21,7 @@ type Message struct{
 	timestamp	time.Time `json:"timestamp,omitempty"`
 
 	// Lamport timestamp
-	local_timestamp lTimeStamp_t string `json:"local_timestamp, omitempty"`
+	local_timestamp lTimeStamp_t `json:"local_timestamp, omitempty"`
 
 	// userMsg
 	text		string `json:"text,omitempty"`
@@ -55,11 +55,11 @@ func (msh *Message_heap) Pop() interface{} {
 }
 
 func (msh *Message_heap) getFirstTimeStamp() interface{}{
-	return (*msh)msg_pts[0]
+	return *msh.msg_pts[0]
 }
 
 func (msh *Message_heap) getFirstMessage() interface{}{
-	return (*msh)msg_pts
+	return *msh.msg_pts
 }
 
 
@@ -77,7 +77,7 @@ func (msg Message)String() string{
 			return fmt.Srintf("<Message type=%v , timestamp:%v>", typeStr, h.timestamp)
 		case msg_userMsg:
 			typeStr = "Msg"
-			var shortText := string
+			var shortText string
 			if len(h.text) > 10{
 				shortText = h.text[:10]+"..."
 			}else{
@@ -90,4 +90,4 @@ func (msg Message)String() string{
 }
 
 // Useful functions
-func 
+//func 

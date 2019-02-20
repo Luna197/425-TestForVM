@@ -15,11 +15,13 @@ import (
 			messages include the user name .. etc
 */
 type appLayer struct {
-	snd_ch <-chan string
-	rcv_ch chan<- string
+	// snd_ch <-chan string
+	// rcv_ch chan<- string
+	rcv_ch <-chan string
+	snd_ch chan<- string
 }
 
-func (ap *appLayer) init(rch chan<- string, sch <-chan string){
+func (ap *appLayer) init(rch <-chan string, sch chan<- string){
 	// set up variales
 	ap.rcv_ch = rch
 	ap.snd_ch = sch
