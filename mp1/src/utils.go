@@ -21,13 +21,11 @@ type Host struct{
 	Domain_name	string	`json:"dname,omitempty"`
 	IP_addr		string	`json:"ip,omitempty"`
  	Port		string	`json:"port,omitempty"`
-// <<<<<<< HEAD
-// 	//conn      net.Conn 
-// =======
+	conn      net.Conn 
+
 	UserName	string
 	Conn 		net.Conn
 
-// >>>>>>> d7006056134c6d97536a6a1513939b3685343f06
 }
 
 // use `initHostInformation()` to initialize this function
@@ -59,14 +57,6 @@ func getLocalIP() string{
 	return host
 }
 
-// <<<<<<< HEAD
-
-
-
-// func getRemoteServers() []Host{
-	
-// 	jData, err := ioutil.ReadFile("servers.json")
-// =======
 /*
 	Search the Host array and return the index of matching host
 	Used in accepting a new connection

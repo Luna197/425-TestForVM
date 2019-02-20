@@ -13,44 +13,42 @@ const(
 
 // Sned all the data throught json
 type Message struct{
-	msg_type	MessageType_t
-	senderName		string `json:"senderName"` // sender
-	senderIdx		int `json:"senderIdx"`
-
-	// Heart beat msg
-	timestamp	time.Time `json:"timestamp,omitempty"`
+	MsgType	MessageType_t
+	SenderName		string `json:"SenderName"` // sender
+	SenderIdx		int `json:"SenderIdx"`
 
 	// Lamport timestamp
-	local_timestamp lTimeStamp_t `json:"local_timestamp, omitempty"`
+	LocalTimeStamp lTimeStamp_t `json:"LocalTimeStamp, omitempty"`
 
 	// userMsg
-	text		string `json:"text,omitempty"`
+	Text		string `json:"Text,omitempty"`
 }
 
 // message heap
 type Message_heap struct{
-	sender_Idx int
+	SenderIdx int
 	msg_pts []*Message
 }
 // implement heap interface
-func (msh *Message_heap) Len() int{ return len(msh.msg_pts)}
-func (msh *Message_heap) Less(i,j int) bool{
-	idx := msh.sender_Idx
+func (msh Message_heap) Len() int{ return len(msh.msg_pts)}
+func (msh Message_heap) Less(i,j int) bool{
+	idx := msh.SenderIdx
 	arr := msh.msg_pts 
-	return (*arr[i])[idx] < (*arr[j])[idx]
+	return arr[i].LocalTimeStamp[idx] < arr[j].LocalTimeStamp[idx]
 }
-func (msh *Message_heap) Swap(i,j int){
-	idx := msh.sender_Idx
+func (msh Message_heap) Swap(i,j int){
 	arr := msh.msg_pts
 	arr[i], arr[j] = arr[j], arr[i]
 }
-func (msh *Message_heap) Push( x interface{}){ *msh = append(*msh, x.(*Message))}
+func (msh *Message_heap) Push( x interface{}){
+	msh.msg_pts = append( msh.msg_pts, x.(*Message))
+}
 
 func (msh *Message_heap) Pop() interface{} {
-	old := ts.msg_pts
-	n := len(old)
-	x := old[n-1] // why
-	*ts = old[0 : n-1]
+	old := msh.msg_pts
+	n := len(msh.msg_pts)
+	x := msh.msg_pts[n-1]
+	msh.msg_pts = old[0 : n-1]
 	return x
 }
 
@@ -59,7 +57,7 @@ func (msh *Message_heap) getFirstTimeStamp() interface{}{
 }
 
 func (msh *Message_heap) getFirstMessage() interface{}{
-	return *msh.msg_pts
+	return msh.msg_pts[0]
 }
 
 
@@ -71,21 +69,18 @@ type MsgHandler interface{
 
 func (msg Message)String() string{
 	var typeStr string
-	switch msg.msg_type{
-		case msg_heartbeat:
-			typeStr = "Hrt"
-			return fmt.Srintf("<Message type=%v , timestamp:%v>", typeStr, h.timestamp)
+	switch msg.MsgType{
 		case msg_userMsg:
 			typeStr = "Msg"
 			var shortText string
-			if len(h.text) > 10{
-				shortText = h.text[:10]+"..."
+			if len(msg.Text) > 10{
+				shortText = msg.Text[:10]+"..."
 			}else{
-				shortText = h.text
+				shortText = msg.Text
 			}
-			return fmt.Srintf("<Message type=%v , text:%v>", typeStr, shortText)
+			return fmt.Sprintf("<Message type=%v , Text:%v>", typeStr, shortText)
 		default:
-			return fmt.Srintf("Message : unknown type")
+			return fmt.Sprintf("Message : unknown type")
 	}
 }
 
