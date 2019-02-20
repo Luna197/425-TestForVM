@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"container/heap"
 	"os"
+	"net"
+	"encoding/json"
 )
 
 
@@ -21,7 +23,7 @@ type lTimeStamp_t []int64
  Notice: call init funciton before any operation
 */
 type multicast interface {
-	init()
+	init( numHosts int, rch chan Message, dch chan string, sch chan string)
 }
 
 /*
@@ -50,35 +52,35 @@ type causal_Multicast struct {
 	del_ch chan<- string
 
 	// for send
-	snd_ch chan<- string
+	snd_ch <-chan string
 
 	// internal datastucture
-	local_timestamp lamportTimeStamp
-	holdback_queues []lTimeStampInfo_heap
+	LocalTimeStamp lTimeStamp_t
+	holdback_queues []*Message_heap
 }
 
 
 func (cm *causal_Multicast) init( numHosts int, rch chan Message, dch chan string, sch chan string) {
-	cm.ltimestamp = make( lamportTimeStamp, numHosts)
+	cm.LocalTimeStamp = make( lTimeStamp_t, numHosts)
 	cm.rcv_ch = rch
 	cm.del_ch = dch
 	cm.snd_ch = sch
 
 	// start a new go routine to handle send messages
-	go recvMsg_handler()
-	go sendMsg_handler()
+	go cm.recvMsg_handler()
+	go cm.sendMsg_handler()
 }
 
 /*
 	deliver message to user channel and update the local-timestamp
 */
 func (cm *causal_Multicast) deliverMsg( msg *Message){
-	deliver_str := msg.senderName + ": " + msg.txt
-	del_ch <- deliver_str
+	deliver_str := msg.SenderName + ": " + msg.Text
+	cm.del_ch <- deliver_str
 	// update timestamp
-	for i:= len(cm.local_timestamp); i>=0; i--{
-		if cm.local_timestamp[i] < msg.local_timestamp[i]{
-			cm.local_timestamp[i] = msg.local_timestamp[i] 
+	for i:= len(cm.LocalTimeStamp); i>=0; i--{
+		if cm.LocalTimeStamp[i] < msg.LocalTimeStamp[i]{
+			cm.LocalTimeStamp[i] = msg.LocalTimeStamp[i] 
 		}
 	}
 }
@@ -86,14 +88,13 @@ func (cm *causal_Multicast) deliverMsg( msg *Message){
 func (cm *causal_Multicast ) recvMsg_handler(){
 	// get message from lower layer
 	for msg := range cm.rcv_ch{
-		n = len(cm.local_timestamp)
-		cts, mts := cm.local_timestamp, msg.local_timestamp
+		n := len(cm.LocalTimeStamp)
+		cts, mts := cm.LocalTimeStamp, msg.LocalTimeStamp
 
 		//check duplicate message
 		msg_duplicate := true
 		for i:=0; i<n; i++{
 			if mts[i] > cts[i]{
-
 				msg_duplicate = false
 				break 
 			} 
@@ -103,13 +104,10 @@ func (cm *causal_Multicast ) recvMsg_handler(){
 		}
 
 		// new message, broadcast to everyone
-		if msg_future || msg_next {
-			// broadcast to everyone
-			multicastMsg( msg, true)
-		}
+		multicastMsg( msg, true)
 
 		// put message in queue and deliver
-		heap.Push(cm.holdback_queues[msg.senderIdx], cm)
+		heap.Push( cm.holdback_queues[msg.SenderIdx], &msg)
 		// deliver all possible messages and update timestamp
 		for delivered_count:=1 ; delivered_count>0;{
 			delivered_count = 0
@@ -117,7 +115,7 @@ func (cm *causal_Multicast ) recvMsg_handler(){
 
 				// message timestamp & local timestamp
 				mts := que.getFirstTimeStamp().(lTimeStamp_t)
-				lts := cm.local_timestamp
+				lts := cm.LocalTimeStamp
 				
 				var msg_next, msg_future bool
 				for i, next_cnt:=0,0 ; i<n; i++{
@@ -141,7 +139,7 @@ func (cm *causal_Multicast ) recvMsg_handler(){
 				}else if msg_next{
 					//deliver msg
 					msg_to_be_delivered := heap.Pop(que).(Message)
-					cm.deliverMsg(msg_to_be_delivered)
+					cm.deliverMsg(&msg_to_be_delivered)
 					delivered_count++
 				}
 			}
@@ -152,11 +150,11 @@ func (cm *causal_Multicast ) recvMsg_handler(){
 func (cm *causal_Multicast ) sendMsg_handler(){
 	// get hosts to send message
 	// only send to soemone who is alive
-	text <- cm.snd_ch.(string)
+	text := <-(cm.snd_ch)
 	var msg Message
-	msg.msg_type = msg_userMsg
-	msg.local_timestamp = cm.local_timestamp
-	msg.text = text
+	msg.MsgType = msg_userMsg
+	msg.LocalTimeStamp = cm.LocalTimeStamp
+	msg.Text = text
 	multicastMsg( msg, true )
 }
 
@@ -166,23 +164,34 @@ func (cm *causal_Multicast ) sendMsg_handler(){
 	the type must be inserted before calling this fuction
 */
 func multicastMsg(msg Message, sendOnlyAlive bool) {
+<<<<<<< HEAD
 	// if msg.msg_type = msg_none{
 	// 	fmt.Println("multicast message without given a msg_type")
 	// 	os.Exit(1)
 	// }
 	msg.senderName =  "to be added" // some name
 	msg.senderIdx = 0// some index
+=======
+	if msg.MsgType == msg_none{
+		fmt.Println("multicast message without given a msg_type")
+		os.Exit(1)
+	}
+	msg.SenderName =  "to be added" // some name
+	msg.SenderIdx = 0// some index
+>>>>>>> b3b4cc516ea3a7a6349309f6f455825d5478e016
 
-	hosts = getRemoteServers()
 	// hosts => msg.src
-	for index,h:= range hosts{
+	for _,h:= range Hosts{
 		// self is alive and the hosts_status is alive
 		// index => hosts_status[index] => servers[id]
-		if !sendOnlyAlive | (sendOnlyAlive && hosts_status[index]==status_alive){
-			conn, err := net.Dial("tcp", h.IP + ":" + h.Port)
+		if !sendOnlyAlive || (sendOnlyAlive && h.conn != nil ){
+			conn, err := net.Dial("tcp", h.IP_addr + ":" + h.Port)
 			defer conn.Close()
 			exitOnErr(err, "message connection failed")
-			conn.Write(msg)
-		}			
+			byteString, err := json.Marshal(msg)
+			exitOnErr(err, "cannot marshall message:")
+			conn.Write(byteString)
+		}
+	}
 }
 }

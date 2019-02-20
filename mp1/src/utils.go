@@ -10,6 +10,7 @@ import (
 
 type RunMode_t int
 
+<<<<<<< HEAD
 const (
 	mode_local  RunMode_t = 0
 	mode_remote RunMode_t = 1
@@ -27,6 +28,18 @@ type Host struct {
 	Conn     net.Conn
 
 	// >>>>>>> d7006056134c6d97536a6a1513939b3685343f06
+=======
+type Host struct{
+	Id			string	`json:"id,omitempty"`
+	Domain_name	string	`json:"dname,omitempty"`
+	IP_addr		string	`json:"ip,omitempty"`
+ 	Port		string	`json:"port,omitempty"`
+	conn      net.Conn 
+
+	UserName	string
+	Conn 		net.Conn
+
+>>>>>>> b3b4cc516ea3a7a6349309f6f455825d5478e016
 }
 
 // use `initHostInformation()` to initialize this function
@@ -58,12 +71,15 @@ func getLocalIP() string {
 	return host
 }
 
+<<<<<<< HEAD
 // <<<<<<< HEAD
 
 // func getRemoteServers() []Host{
 
 // 	jData, err := ioutil.ReadFile("servers.json")
 // =======
+=======
+>>>>>>> b3b4cc516ea3a7a6349309f6f455825d5478e016
 /*
 	Search the Host array and return the index of matching host
 	Used in accepting a new connection
