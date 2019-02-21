@@ -30,7 +30,7 @@ func main() {
 		init all Host infor
 	*/
 	initHostInformation(mode_remote)
-	fmt.Println(Hosts)
+	//fmt.Println(Hosts)
 	//initHostInformation(mode_local)
 	ipself := getLocalIP()
 	thisID := getHostIndexByIP(ipself)
