@@ -106,6 +106,7 @@ func sendServers(n int) {
 			}
 			//for remote ip address
 			dialAddr := Hosts[idx].IP_addr + ":" + Hosts[idx].Port
+			fmt.Println(dialAddr)
 
 			// dialAddr := "127.0.0.1:" + Hosts[idx].Port
 			dialCon, err := net.Dial("tcp", dialAddr)
