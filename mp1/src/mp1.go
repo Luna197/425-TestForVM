@@ -1,96 +1,166 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"os"
 	"net"
+	"os"
+	"strconv"
 )
 
-var hosts_status [10]Status
+var hosts_status [10]bool
 
-func main(){
-	if len(os.Args)< 4 {
+func main() {
+	// handle input
+	if len(os.Args) < 4 {
 		fmt.Println("invalid arguments. please use the following format: ")
 		fmt.Println("\"./mp1 name port n\"")
 		os.Exit(1)
 	}
-	//fmt.Printf("arguments : %v\n", os.Args)
+	// //fmt.Printf("arguments : %v\n", os.Args)
 	userName, listenPort, totaluser := os.Args[1], os.Args[2], os.Args[3]
 	fmt.Printf("Username : %v, Port : %v ,totaluser : %v\n", userName, listenPort, totaluser)
 
-	/* init Process
-	  create different channels
-		mcast_app_ch : mcast->app layer
-			deliver messages to the application layer
-		app_mcast_ch : app->mcast layer
-			send messages from app to other hosts
+	i_totaluser, err := strconv.Atoi(totaluser)
+	if err != nil {
+		exitOnErr(err, "string to int conver fail")
+	}
+
+	/*
+		init all Host infor
 	*/
-	tcp_mcast_ch := make( chan Message )
-	mcast_app_ch := make( chan string )
-	app_mcast_ch := make( chan string )
-	tcp_fdetect_ch := make( chan Message)
+	//	initHostInformation(mode_remote)
+	initHostInformation(mode_local)
 
-	defer close(tcp_mcast_ch)
-	defer close(mcast_app_ch)
-	defer close(app_mcast_ch)
-	defer close(tcp_fdetect_ch)
+	thisID := getHostIndexByPort(listenPort)
+	Hosts[thisID].UserName = userName
 
-	var fdet failureDetecter{}
-	fdet.init(&hosts_status,tcp_fdetect_ch)
+	hosts_status[thisID] = true
 
-	mcast multicast := &causal_Multicast{}
-	multicast.init( tcp_mcast_ch, mcast_app_ch, app_mcast_ch)
+	// Dail to all servers
+	go sendServers(listenPort, i_totaluser)
 
-	var client *appLayer
-	client.init( mcast_app_ch, app_mcast_ch)
-	
+	listenhost := ":" + listenPort
 
-	// Listen for incoming connections.
-    l, err := net.Listen("tcp", "localhost:" + listenPort )
-    exitOnErr(err, "Error listening:", err.Error())
+	l, err := net.Listen("tcp", listenhost)
+	fmt.Println("listen port now is ", listenPort)
+	if err != nil {
+		fmt.Println("Listen failed")
+		return
+	}
 
-    // Close the listener when the application closes.
-    defer l.Close()
-    fmt.Println("Listening on localhost : " + listenPort )
-    for {
-        conn, err := l.Accept()
-        exitOnErr(err, "Error accepting: ", err.Error())
-        go handleRequest(conn, tcp_mcast_ch)
-    }
+	fmt.Println("Listening on localhost : " + listenPort)
+
+	for {
+
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("accept failed")
+			continue
+		}
+		
+		// for remote test
+		// // hostId := findHostIndexByConn(conn)
+		// // could delete all parameters of port
+
+		// for local test
+		hostID := getHostIndexByPort(listenPort)
+
+		Hosts[hostID].Conn = conn
+		fmt.Println("after accept=======================", hosts_status, Hosts)
+		//hosts_status[hostID] = true
+		//fmt.Println(conn.RemoteAddr())
+	}
 }
 
-func handleRequest( conn net.Conn, tcp_mcast_ch chan Message ){
-	// Make a buffer to hold incoming data.
-	buf := make([]byte, 1024)
-	// Read the incoming connection into the buffer.
-	len, err := conn.Read(buf)
-	exitOnErr(err, "Error reading:"err.Error())
+func sendServers(port string, n int) {
+	// for remote ip test
+	// // ipself = getLocalIP()
+	count := 1
 
-	var jsonMsg Message
-	err = json.Unmarshal(buf[:len],&jsonMsg)
-	exitOnErr(err, "Error Unmarshal data:"err.Error())
+	for {
 
-	// go multicastMsg(jsonMsg, tcp_mcast_ch)
-	// go heartBeat(conn, tcp_mcast_ch, 6)
-	// message router
-	fmt.Println(jsonMsg)
+		for idx := range Hosts {
+			//	fmt.Println("origin count", count)
 
-	switch jsonMsg.type{
-		case msg_heartbeat:
-			tcp_fdetect_ch <-jsonMsg
-			fmt.Printf("recieved Heartbeat: %v", jsonMsg)
-		case msg_userMsg:
-			fmt.Printf("received User Msg : %v", jsonMsg)
-			tcp_mcast_ch <- jsonMsg 
-			
-		default:
-			fmt.Printf("unknownw msg :%v", jsonMsg)
+			// if Hosts[idx].IP_addr == ipself{
+			// 	continue
+			// }
+
+			if Hosts[idx].Port == port {
+				continue
+			}
+			if hosts_status[idx] == true {
+				continue
+				// if Hosts[idx].Conn == nil {
+				// 	count = count - 1
+				// 	hosts_status[idx] = false
+				// }
+			}
+			// for remote ip address
+			// //dialAddr := Hosts[idx].IP_addr + ":" + Hosts[idx].Port
+
+			dialAddr := "127.0.0.1:" + Hosts[idx].Port
+			dialCon, err := net.Dial("tcp", dialAddr)
+			if err == nil {
+				fmt.Println("successful connection:-------------------", Hosts[idx].Port)
+				count = count + 1
+				hosts_status[idx] = true
+				Hosts[idx].Conn = dialCon
+				fmt.Println(hosts_status, Hosts)
+				fmt.Println("connection read,write check=======================", idx, hosts_status, Hosts)
+				go readHandler(dialCon, port)
+
+				// for remote version, parameters could be
+				// go writeHandler(dialCon)
+				go writeHandler(port)
+			}
+			//fmt.Println("after count", count)
+		}
+		if count == n {
+			break
+		}
+		//	fmt.Println("exit count", count)
 	}
-	fmt.Printf("received message(%v): %v \n", len, string(buf[:19]) )
-	
+	fmt.Println("READY")
+}
 
-	// Send a response back to person contacting us.
-	conn.Write([]byte("Message received."))
-	// Close the connection when you're done with it.
-	conn.Close()
+func readHandler(conn net.Conn, listenPort string) {
+
+	for {
+		var buf = make([]byte, 1024)
+		len, err := conn.Read(buf)
+
+		if err != nil {
+
+			// // for remote ip address
+			// hostId := getHostIndexByConn(conn)
+
+			hostId := getHostIndexByPort(listenPort)
+			left_User := Hosts[hostId].UserName
+			fmt.Println(left_User + " has left")
+			Hosts[hostId].Conn = nil
+			hosts_status[hostId] = false
+			fmt.Println("read failture check=======================", hosts_status, Hosts)
+			break
+		}
+		fmt.Printf("Message got from %s is %s\n", listenPort, string(buf[:len]))
+	}
+}
+func writeHandler(listenPort string) {
+	// // for remote server
+	//index = findHostIndexByConn(conn net.Conn)
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		data := scanner.Text()
+		for idx := range Hosts {
+
+			if Hosts[idx].Conn != nil && hosts_status[idx] == true {
+				fmt.Println("write check=======================", idx, hosts_status, Hosts)
+				Hosts[idx].Conn.Write([]byte(data))
+			}
+		}
+		// fmt.Printf("Message got from %s is %s\n", Host[index].UserName, scanner.Text())
+		fmt.Printf("Message got from %s is %s\n", listenPort, scanner.Text())
+	}
 }

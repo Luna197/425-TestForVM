@@ -3,6 +3,12 @@ package main
 import (
 	"fmt"
 	"time"
+<<<<<<< HEAD
+=======
+	// "time.Time"
+	// "time.Duration"
+	"sync"
+>>>>>>> 3deab4c06c30b3e08ada80f01728d6570f30c802
 )
 
 type Status_t int
@@ -37,7 +43,11 @@ func (fd *failureDetecter) init(st *[10]Status, hIntval Duration, ch chan string
 	go fd.checkTimeOut()
 }
 
+<<<<<<< HEAD
 func (fd *failureDetecter) startHeartBeating() {
+=======
+func (fd *failureDetecter) startHeartBeating(){
+>>>>>>> 3deab4c06c30b3e08ada80f01728d6570f30c802
 	var msg Message
 	msg.msg_type = msg_heartbeat
 	for {
@@ -77,6 +87,7 @@ func (fd *failureDetecter) checkTimeOut() {
 
 // receive message and check hearBest fail or not, update timeout
 func (fd *failureDetecter) recvMsg_handler() {
+<<<<<<< HEAD
 	for {
 		if msg, ok := <-fd.recv_ch; ok {
 			if mg.timestamp <= timeOut[mg.src] {
@@ -84,6 +95,11 @@ func (fd *failureDetecter) recvMsg_handler() {
 			}
 		} else {
 			break
+=======
+    for msg := range fd.recv_ch{
+		if mg.timestamp <= timeOut[mg.src]{
+			timeOut[msg.src] = msg.timestamp.Add(time.Duration(timeout) * time.Second)
+>>>>>>> 3deab4c06c30b3e08ada80f01728d6570f30c802
 		}
 
 	}

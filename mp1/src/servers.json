@@ -1,4 +1,5 @@
 [
+<<<<<<< HEAD
     { "id":"01","dname":"sp19-cs425-g53-01.cs.illinois.edu", "port":"50001"},
     { "id":"02","dname":"sp19-cs425-g53-02.cs.illinois.edu", "port":"50002"},
     { "id":"03","dname":"sp19-cs425-g53-03.cs.illinois.edu", "port":"50003"},
@@ -10,3 +11,21 @@
     { "id":"09","dname":"sp19-cs425-g53-09.cs.illinois.edu", "port":"50009"},
     { "id":"10","dname":"sp19-cs425-g53-10.cs.illinois.edu", "port":"50010"}
 ]
+
+
+
+
+
+=======
+    { "id":"00","dname":"sp19-cs425-g53-01.cs.illinois.edu", "port":"50000"},
+    { "id":"01","dname":"sp19-cs425-g53-02.cs.illinois.edu", "port":"50001"},
+    { "id":"02","dname":"sp19-cs425-g53-03.cs.illinois.edu", "port":"50002"},
+    { "id":"03","dname":"sp19-cs425-g53-04.cs.illinois.edu", "port":"50003"},
+    { "id":"04","dname":"sp19-cs425-g53-05.cs.illinois.edu", "port":"50004"},
+    { "id":"05","dname":"sp19-cs425-g53-06.cs.illinois.edu", "port":"50005"},
+    { "id":"06","dname":"sp19-cs425-g53-07.cs.illinois.edu", "port":"50006"},
+    { "id":"07","dname":"sp19-cs425-g53-08.cs.illinois.edu", "port":"50007"},
+    { "id":"08","dname":"sp19-cs425-g53-09.cs.illinois.edu", "port":"50008"},
+    { "id":"09","dname":"sp19-cs425-g53-10.cs.illinois.edu", "port":"50009"}
+]
+>>>>>>> d7006056134c6d97536a6a1513939b3685343f06
