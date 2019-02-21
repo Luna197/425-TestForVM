@@ -117,7 +117,7 @@ func sendServers(listenPort string, n int) {
 				count = count + 1
 				hosts_status[idx] = true
 				Hosts[idx].Conn = dialCon
-				fmt.Println(hosts_status, Hosts)
+				//fmt.Println(hosts_status, Hosts)
 				fmt.Println("after connection and before read,write check=======================", idx)
 				fmt.Println("after connection and before read,write check=======================", hosts_status[0], hosts_status[1])
 				fmt.Println("after connection and before read,write check=======================",  Hosts[0], Hosts[1])
@@ -151,7 +151,7 @@ func readHandler(conn net.Conn) {
 
 			// hostId := getHostIndexByPort(listenPort)
 			left_User := Hosts[hostId].UserName
-			//fmt.Println(left_User + " has left")
+			fmt.Println(left_User + " has left")
 			Hosts[hostId].Conn = nil
 			hosts_status[hostId] = false
 			conn.Close()
