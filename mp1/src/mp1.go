@@ -29,16 +29,16 @@ func main() {
 	/*
 		init all Host infor
 	*/
-	//	initHostInformation(mode_remote)
-	initHostInformation(mode_local)
+	initHostInformation(mode_remote)
+	//initHostInformation(mode_local)
 
-	thisID := getHostIndexByPort(listenPort)
+	thisID := getHostIndexByIP(listenPort)
 	Hosts[thisID].UserName = userName
 
 	hosts_status[thisID] = true
 
 	// Dail to all servers
-	go sendServers(listenPort, i_totaluser)
+	go sendServers(i_totaluser)
 
 	listenhost := ":" + listenPort
 
@@ -49,8 +49,6 @@ func main() {
 		return
 	}
 
-	fmt.Println("Listening on localhost : " + listenPort)
-
 	for {
 
 		conn, err := l.Accept()
@@ -58,24 +56,25 @@ func main() {
 			fmt.Println("accept failed")
 			continue
 		}
-		
+
 		// for remote test
-		// // hostId := findHostIndexByConn(conn)
-		// // could delete all parameters of port
+		hostId := findHostIndexByConn(conn)
+		// could delete all parameters of port
 
-		// for local test
-		hostID := getHostIndexByPort(listenPort)
+		// // for local test
+		// hostID := getHostIndexByPort(listenPort)
 
-		Hosts[hostID].Conn = conn
+		Hosts[hostId].Conn = conn
+		hosts_status[hostId] = true
 		fmt.Println("after accept=======================", hosts_status, Hosts)
-		//hosts_status[hostID] = true
+
 		//fmt.Println(conn.RemoteAddr())
 	}
 }
 
-func sendServers(port string, n int) {
-	// for remote ip test
-	// // ipself = getLocalIP()
+func sendServers(n int) {
+	//for remote ip test
+	ipself := getLocalIP()
 	count := 1
 
 	for {
@@ -87,7 +86,7 @@ func sendServers(port string, n int) {
 			// 	continue
 			// }
 
-			if Hosts[idx].Port == port {
+			if Hosts[idx].IP_addr == ipself {
 				continue
 			}
 			if hosts_status[idx] == true {
@@ -97,23 +96,23 @@ func sendServers(port string, n int) {
 				// 	hosts_status[idx] = false
 				// }
 			}
-			// for remote ip address
-			// //dialAddr := Hosts[idx].IP_addr + ":" + Hosts[idx].Port
+			//for remote ip address
+			dialAddr := Hosts[idx].IP_addr + ":" + Hosts[idx].Port
 
-			dialAddr := "127.0.0.1:" + Hosts[idx].Port
+			// dialAddr := "127.0.0.1:" + Hosts[idx].Port
 			dialCon, err := net.Dial("tcp", dialAddr)
 			if err == nil {
-				fmt.Println("successful connection:-------------------", Hosts[idx].Port)
+				fmt.Println("successful connection:-------------------", Hosts[idx].UserName)
 				count = count + 1
 				hosts_status[idx] = true
 				Hosts[idx].Conn = dialCon
 				fmt.Println(hosts_status, Hosts)
-				fmt.Println("connection read,write check=======================", idx, hosts_status, Hosts)
-				go readHandler(dialCon, port)
+				fmt.Println("after connection and before read,write check=======================", idx, hosts_status, Hosts)
+				go readHandler(dialCon)
 
 				// for remote version, parameters could be
 				// go writeHandler(dialCon)
-				go writeHandler(port)
+				go writeHandler(idx)
 			}
 			//fmt.Println("after count", count)
 		}
@@ -125,8 +124,9 @@ func sendServers(port string, n int) {
 	fmt.Println("READY")
 }
 
-func readHandler(conn net.Conn, listenPort string) {
+func readHandler(conn net.Conn) {
 
+	hostId := findHostIndexByConn(conn)
 	for {
 		var buf = make([]byte, 1024)
 		len, err := conn.Read(buf)
@@ -134,9 +134,9 @@ func readHandler(conn net.Conn, listenPort string) {
 		if err != nil {
 
 			// // for remote ip address
-			// hostId := getHostIndexByConn(conn)
+			//	fail_hostId := findHostIndexByConn(conn)
 
-			hostId := getHostIndexByPort(listenPort)
+			// hostId := getHostIndexByPort(listenPort)
 			left_User := Hosts[hostId].UserName
 			fmt.Println(left_User + " has left")
 			Hosts[hostId].Conn = nil
@@ -144,10 +144,11 @@ func readHandler(conn net.Conn, listenPort string) {
 			fmt.Println("read failture check=======================", hosts_status, Hosts)
 			break
 		}
-		fmt.Printf("Message got from %s is %s\n", listenPort, string(buf[:len]))
+
+		fmt.Printf("Message got from %s is %s\n", Hosts[hostId].UserName, string(buf[:len]))
 	}
 }
-func writeHandler(listenPort string) {
+func writeHandler(index int) {
 	// // for remote server
 	//index = findHostIndexByConn(conn net.Conn)
 	scanner := bufio.NewScanner(os.Stdin)
@@ -155,12 +156,13 @@ func writeHandler(listenPort string) {
 		data := scanner.Text()
 		for idx := range Hosts {
 
+			fmt.Println("before write to check the conn and status")
 			if Hosts[idx].Conn != nil && hosts_status[idx] == true {
 				fmt.Println("write check=======================", idx, hosts_status, Hosts)
 				Hosts[idx].Conn.Write([]byte(data))
 			}
 		}
 		// fmt.Printf("Message got from %s is %s\n", Host[index].UserName, scanner.Text())
-		fmt.Printf("Message got from %s is %s\n", listenPort, scanner.Text())
+		fmt.Printf("Message got from %s is %s\n", Hosts[index].UserName, scanner.Text())
 	}
 }
