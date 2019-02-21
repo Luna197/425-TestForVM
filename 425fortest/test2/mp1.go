@@ -39,7 +39,7 @@ func main() {
 	hosts_status[thisID] = true
 
 	// Dail to all servers
-	go sendServers(i_totaluser)
+	go sendServers(listenPort, i_totaluser)
 
 	listenHost := ":" + listenPort
 	
@@ -79,7 +79,7 @@ func main() {
 	}
 }
 
-func sendServers(n int) {
+func sendServers(listenPort string, n int) {
 	//for remote ip testg
 	ipself := getLocalIP()
 	count := 1
@@ -105,8 +105,8 @@ func sendServers(n int) {
 				// }
 			}
 			//for remote ip address
-			dialAddr := Hosts[idx].IP_addr + ":" + Hosts[idx].Port
-			fmt.Println(dialAddr)
+			dialAddr := Hosts[idx].IP_addr + ":" + listenPort
+			//fmt.Println(dialAddr)
 
 			// dialAddr := "127.0.0.1:" + Hosts[idx].Port
 			dialCon, err := net.Dial("tcp", dialAddr)
