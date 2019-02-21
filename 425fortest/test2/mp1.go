@@ -31,7 +31,7 @@ func main() {
 	*/
 	initHostInformation(mode_remote)
 	//initHostInformation(mode_local)
-	ipself := getLocalIP
+	ipself := getLocalIP()
 	thisID := getHostIndexByIP(ipself)
 	Hosts[thisID].UserName = userName
 
