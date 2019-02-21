@@ -37,7 +37,7 @@ var Hosts []Host
 var UTILS_currRunMode RunMode_t
 
 func (h Host) String() string {
-	return fmt.Sprintf("<Host id:%v, dame:%v, ip:%v, port:%v, conn:%v>", h.Id, h.Domain_name, h.IP_addr, h.Port, h.Conn)
+	return fmt.Sprintf("<Host id:%v, dame:%v, username:%v, ip:%v, port:%v, conn:%v>", h.Id, h.Domain_name, h.UserName, h.IP_addr, h.Port, h.Conn)
 }
 
 func exitOnErr(err error, str string) {
