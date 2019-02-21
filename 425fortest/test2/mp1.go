@@ -48,8 +48,8 @@ func main() {
 	return
 	}
 
-	l, err := net.ListenTCP("tcp", listenHost)
-	fmt.Println("listen port now is ", listenPort)
+	l, err := net.ListenTCP("tcp", tcpAddr)
+	fmt.Println("listen port now is ", listenHost)
 	if err != nil {
 		fmt.Println("Listen failed")
 		return
