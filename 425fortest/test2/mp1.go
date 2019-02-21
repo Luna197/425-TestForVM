@@ -73,7 +73,9 @@ func main() {
 
 		Hosts[hostId].Conn = conn
 		hosts_status[hostId] = true
-		fmt.Println("after accept=======================", hosts_status, Hosts)
+		fmt.Println("after accept=======================", hosts_status[0], hosts_status[1])
+		fmt.Println("after accept=======================", Hosts[0], Hosts[1])
+		
 
 		//fmt.Println(conn.RemoteAddr())
 	}
@@ -116,7 +118,9 @@ func sendServers(listenPort string, n int) {
 				hosts_status[idx] = true
 				Hosts[idx].Conn = dialCon
 				fmt.Println(hosts_status, Hosts)
-				fmt.Println("after connection and before read,write check=======================", idx, hosts_status, Hosts)
+				fmt.Println("after connection and before read,write check=======================", idx)
+				fmt.Println("after connection and before read,write check=======================", hosts_status[0], hosts_status[1])
+				fmt.Println("after connection and before read,write check=======================",  Hosts[0], Hosts[1])
 				go readHandler(dialCon)
 
 				// for remote version, parameters could be
@@ -151,7 +155,9 @@ func readHandler(conn net.Conn) {
 			Hosts[hostId].Conn = nil
 			hosts_status[hostId] = false
 			conn.Close()
-			fmt.Println("read failture check=======================", hosts_status, Hosts)
+			fmt.Println("read failture check=======================",hostId)
+			fmt.Println("read failture check=======================",hosts_status[0], hosts_status[1])
+			fmt.Println("read failture check=======================",Hosts[0], Hosts[1])
 			break
 		}
 
@@ -168,7 +174,9 @@ func writeHandler(index int) {
 
 			fmt.Println("before write to check the conn and status")
 			if Hosts[idx].Conn != nil && hosts_status[idx] == true {
-				fmt.Println("write check=======================", idx, hosts_status, Hosts)
+				fmt.Println("write check=======================", idx)
+				fmt.Println("write check=======================", hosts_status[0], hosts_status[1])
+				fmt.Println("write check=======================", Hosts[0], Hosts[1])
 				Hosts[idx].Conn.Write([]byte(data))
 			}
 		}
