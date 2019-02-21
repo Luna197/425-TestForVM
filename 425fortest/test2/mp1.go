@@ -151,7 +151,7 @@ func readHandler(conn net.Conn) {
 
 			// hostId := getHostIndexByPort(listenPort)
 			left_User := Hosts[hostId].UserName
-			fmt.Println(left_User + " has left")
+			//fmt.Println(left_User + " has left")
 			Hosts[hostId].Conn = nil
 			hosts_status[hostId] = false
 			conn.Close()
