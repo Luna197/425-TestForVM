@@ -42,7 +42,7 @@ func main() {
 
 	listenhost := ":" + listenPort
 
-	l, err := net.Listen("tcp", listenhost)
+	l, err := net.ListenTCP("tcp", listenhost)
 	fmt.Println("listen port now is ", listenPort)
 	if err != nil {
 		fmt.Println("Listen failed")
@@ -51,7 +51,7 @@ func main() {
 
 	for {
 
-		conn, err := l.Accept()
+		conn, err := l.AcceptTCP()
 		if err != nil {
 			fmt.Println("accept failed")
 			continue
