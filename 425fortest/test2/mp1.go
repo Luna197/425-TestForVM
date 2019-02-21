@@ -30,6 +30,7 @@ func main() {
 		init all Host infor
 	*/
 	initHostInformation(mode_remote)
+	fmt.Println(Hosts)
 	//initHostInformation(mode_local)
 	ipself := getLocalIP()
 	thisID := getHostIndexByIP(ipself)
@@ -86,6 +87,7 @@ func sendServers(n int) {
 	for {
 
 		for idx := range Hosts {
+		
 			//	fmt.Println("origin count", count)
 
 			// if Hosts[idx].IP_addr == ipself{
