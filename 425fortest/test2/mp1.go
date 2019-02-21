@@ -40,9 +40,15 @@ func main() {
 	// Dail to all servers
 	go sendServers(i_totaluser)
 
-	listenhost := ":" + listenPort
+	listenHost := ":" + listenPort
+	
+	tcpAddr, err := net.ResolveTCPAddr("tcp4", listenHost)
+	if err != nil {
+	fmt.Println("bug bug bug")
+	return
+	}
 
-	l, err := net.ListenTCP("tcp", listenhost)
+	l, err := net.ListenTCP("tcp", listenHost)
 	fmt.Println("listen port now is ", listenPort)
 	if err != nil {
 		fmt.Println("Listen failed")
