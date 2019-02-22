@@ -30,6 +30,8 @@ func main() {
 		init all Host infor
 	*/
 	initHostInformation(mode_remote)
+	setMyHostInformation(listenPort, userName)
+
 	//fmt.Println(Hosts)
 	//initHostInformation(mode_local)
 	ipself := getLocalIP()
@@ -42,11 +44,11 @@ func main() {
 	go sendServers(listenPort, i_totaluser)
 
 	listenHost := ":" + listenPort
-	
+
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", listenHost)
 	if err != nil {
-	fmt.Println("bug bug bug")
-	return
+		fmt.Println("bug bug bug")
+		return
 	}
 
 	l, err := net.ListenTCP("tcp", tcpAddr)
@@ -57,48 +59,32 @@ func main() {
 	}
 
 	for {
-
 		conn, err := l.AcceptTCP()
 		if err != nil {
 			fmt.Println("accept failed")
 			continue
 		}
-
-		// for remote test
-		hostId := findHostIndexByConn(conn)
-		// could delete all parameters of port
-
-		// // for local test
-		// hostID := getHostIndexByPort(listenPort)
-
-		Hosts[hostId].Conn = conn
-		hosts_status[hostId] = true
-// 		fmt.Println("after accept=======================", hosts_status[0], hosts_status[1])
-// 		fmt.Println("after accept=======================", Hosts[0], Hosts[1])
-		
-
+		Hosts[MyHostIndex].Conn = conn
+		hosts_status[MyHostIndex] = true
+		// 		fmt.Println("after accept=======================", hosts_status[0], hosts_status[1])
+		// 		fmt.Println("after accept=======================", Hosts[0], Hosts[1])
 		//fmt.Println(conn.RemoteAddr())
 	}
 }
 
 func sendServers(listenPort string, n int) {
 	//for remote ip testg
-	ipself := getLocalIP()
+	//ipself := getLocalIP()
 	count := 1
 
 	for {
 
 		for idx := range Hosts {
-		
-			//	fmt.Println("origin count", count)
-
-			// if Hosts[idx].IP_addr == ipself{
-			// 	continue
-			// }
-
-			if Hosts[idx].IP_addr == ipself {
+			if idx == MyHostIndex {
 				continue
 			}
+			//	fmt.Println("origin count", count)
+
 			if hosts_status[idx] == true {
 				if Hosts[idx].Conn == nil {
 					count = count - 1
@@ -106,8 +92,9 @@ func sendServers(listenPort string, n int) {
 				}
 				continue
 			}
+
 			//for remote ip address
-			dialAddr := Hosts[idx].IP_addr + ":" + listenPort
+			dialAddr := Hosts[idx].IP_addr + ":" + Hosts[idx].Port
 			//fmt.Println(dialAddr)
 
 			// dialAddr := "127.0.0.1:" + Hosts[idx].Port
@@ -117,11 +104,11 @@ func sendServers(listenPort string, n int) {
 				count = count + 1
 				hosts_status[idx] = true
 				Hosts[idx].Conn = dialCon
-				
-// 				//fmt.Println(hosts_status, Hosts)
-// 				fmt.Println("after connection and before read,write check=======================", idx)
-// 				fmt.Println("after connection and before read,write check=======================", hosts_status[0], hosts_status[1])
-// 				fmt.Println("after connection and before read,write check=======================",  Hosts[0], Hosts[1])
+
+				// 				//fmt.Println(hosts_status, Hosts)
+				// 				fmt.Println("after connection and before read,write check=======================", idx)
+				// 				fmt.Println("after connection and before read,write check=======================", hosts_status[0], hosts_status[1])
+				// 				fmt.Println("after connection and before read,write check=======================",  Hosts[0], Hosts[1])
 				go readHandler(dialCon)
 
 				// for remote version, parameters could be
@@ -156,15 +143,19 @@ func readHandler(conn net.Conn) {
 			Hosts[hostId].Conn = nil
 			hosts_status[hostId] = false
 			conn.Close()
-// 			fmt.Println("read failture check=======================",hostId)
-// 			fmt.Println("read failture check=======================",hosts_status[0], hosts_status[1])
-// 			fmt.Println("read failture check=======================",Hosts[0], Hosts[1])
+			// 			fmt.Println("read failture check=======================",hostId)
+			// 			fmt.Println("read failture check=======================",hosts_status[0], hosts_status[1])
+			// 			fmt.Println("read failture check=======================",Hosts[0], Hosts[1])
+			
+			// Continue to Dail to all servers
+			go sendServers(listenPort, i_totaluser)
 			break
 		}
 
 		fmt.Printf("Message got from %s is %s\n", Hosts[hostId].UserName, string(buf[:len]))
 	}
 }
+
 func writeHandler(index int) {
 	// // for remote server
 	//index = findHostIndexByConn(conn net.Conn)
@@ -175,9 +166,9 @@ func writeHandler(index int) {
 
 			fmt.Println("before write to check the conn and status")
 			if Hosts[idx].Conn != nil && hosts_status[idx] == true {
-// 				fmt.Println("write check=======================", idx)
-// 				fmt.Println("write check=======================", hosts_status[0], hosts_status[1])
-// 				fmt.Println("write check=======================", Hosts[0], Hosts[1])
+				// 				fmt.Println("write check=======================", idx)
+				// 				fmt.Println("write check=======================", hosts_status[0], hosts_status[1])
+				// 				fmt.Println("write check=======================", Hosts[0], Hosts[1])
 				Hosts[idx].Conn.Write([]byte(data))
 			}
 		}
