@@ -149,7 +149,6 @@ func readHandler(conn net.Conn) {
 			// 			fmt.Println("read failture check=======================",Hosts[0], Hosts[1])
 			
 			// Continue to Dail to all servers
-			go sendServers(listenPort, i_totaluser)
 			break
 		}
 
