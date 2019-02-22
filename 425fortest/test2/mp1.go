@@ -41,7 +41,7 @@ func main() {
 	hosts_status[thisID] = true
 
 	// Dail to all servers
-	go sendServers(listenPort, i_totaluser)
+	go sendServers(i_totaluser)
 
 	listenHost := ":" + listenPort
 
