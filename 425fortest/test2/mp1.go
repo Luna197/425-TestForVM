@@ -118,12 +118,12 @@ func sendServers(n int) {
 			//fmt.Println("after count", count)
 		}
 		if count == n {
-			//fmt.Println("READY")
+			
 			break
 		}
-			fmt.Println("exit count", count)
+			
 	}
-	
+	fmt.Println("READY")
 }
 
 func readHandler(conn net.Conn) {
