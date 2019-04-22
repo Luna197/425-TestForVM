@@ -1,0 +1,10 @@
+.outer
+{
+     padding: 10em;
+}
+
+.inner
+{
+     margin: 0 auto;
+     max-width: 100em; 
+}
